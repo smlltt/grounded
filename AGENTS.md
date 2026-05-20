@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-Astro 6 SSR app (React 19 islands, Tailwind 4, shadcn/ui, Supabase Auth) deployed to Cloudflare Workers. See `@README.md` for setup and `@CLAUDE.md` for architecture depth.
+Astro 6 SSR app (React 19 islands, Tailwind 4, shadcn/ui, Supabase Auth) deployed to Cloudflare Workers. See `@README.md` (setup) and `@CLAUDE.md` (architecture).
 
 ## Hard Rules
 
@@ -9,11 +9,12 @@ Astro 6 SSR app (React 19 islands, Tailwind 4, shadcn/ui, Supabase Auth) deploye
 - Never concatenate Tailwind class strings — use `cn()` from `@/lib/utils` (clsx + tailwind-merge).
 - New React forms use `react-hook-form` + `zod` resolver — no bare `useState` validators (existing `src/components/auth/*` predates this).
 - New Supabase tables must enable RLS with granular per-operation, per-role policies.
+- MIAPI calls go server-side via `src/lib/services/miapi.ts` — only `POST /v1/answer` with `citations: true` and `include_sources: true`; zod-validate the response (docs: https://miapi.uk/#docs).
 - No Next.js directives (`"use client"`, etc.) — Astro, not Next.
 
 ## Project Structure & Module Organization
 
-- `src/pages/` — Astro routes; `src/pages/api/` endpoints export uppercase `GET`/`POST` and validate input with zod.
+- `src/pages/` — Astro routes; `src/pages/api/` endpoints export uppercase `GET`/`POST` and zod-validate input.
 - `src/components/` — `*.astro` for static/layout, React `*.tsx` only when interactive. shadcn primitives in `src/components/ui/` (new-york variant; add via `npx shadcn@latest add <name>`); hooks in `src/components/hooks/`.
 - `src/lib/` — services/helpers (`supabase.ts`, `utils.ts`); business logic in `src/lib/services/`. Path alias `@/*` → `./src/*`.
 - `src/middleware.ts` — auth gate; add protected paths to `PROTECTED_ROUTES`.
@@ -31,12 +32,12 @@ Astro 6 SSR app (React 19 islands, Tailwind 4, shadcn/ui, Supabase Auth) deploye
 
 ## Coding Style & Naming Conventions
 
-Two-space indent, double quotes, semicolons, trailing commas, 120-col print width (`@.prettierrc.json`). TypeScript strict via `@tsconfig.json`. Pre-commit (husky + lint-staged) runs `eslint --fix` on `*.{ts,tsx,astro}` and `prettier --write` on `*.{json,css,md}` — do not bypass.
+Two-space indent, double quotes, semicolons, trailing commas, 120-col print width (`@.prettierrc.json`). TypeScript strict via `@tsconfig.json`. Pre-commit (husky + lint-staged) auto-fixes `*.{ts,tsx,astro}` and formats `*.{json,css,md}` — don't bypass.
 
 ## Commit & Pull Request Guidelines
 
-Branch off `main` as `feature/<slug>` and merge via PR (see `git log`). Commit subjects: short, sentence-case, imperative (e.g. *"tech stack bootstrap"*); no Conventional Commits prefix. CI (`@.github/workflows/ci.yml`) runs `npm ci`, `npx astro sync`, `npm run lint`, `npm run build` on push and PR to `master` — all must pass. `SUPABASE_URL` and `SUPABASE_KEY` are required GitHub secrets.
+Branch off `main` as `feature/<slug>` and merge via PR. Commit subjects: short, sentence-case, imperative (e.g. *"tech stack bootstrap"*); no Conventional Commits prefix. CI (`@.github/workflows/ci.yml`) runs `astro sync`, `lint`, and `build` on push/PR to `master` — all must pass. `SUPABASE_URL`, `SUPABASE_KEY`, and `MIAPI_API_KEY` are required GitHub secrets.
 
 ## Security & Configuration
 
-Node dev uses `.env`; Cloudflare local dev uses `.dev.vars` (both gitignored). Production secrets via `npx wrangler secret put`. Node pinned in `@.nvmrc` (v22.14.0).
+Local env: `.env` (Node) or `.dev.vars` (Cloudflare, gitignored); production secrets via `npx wrangler secret put`. Node pinned in `@.nvmrc` (v22.14.0).
