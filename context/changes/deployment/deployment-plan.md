@@ -54,9 +54,9 @@ flowchart LR
 - [x] Phase 4 — First manual deploy from laptop
 - [ ] Phase 5 — Post-deploy smoke (NFR gates)
 - [x] Phase 6 — Set up GitHub Actions deploy workflow
-- [ ] Phase 7 — Workflow role separation (`ci.yml` vs `deploy.yml`)
-- [ ] Phase 8 — Rollback drill
-- [ ] Phase 9 — Docs sync
+- [x] Phase 7 — Workflow role separation (`ci.yml` vs `deploy.yml`)
+- [x] Phase 8 — Rollback drill
+- [x] Phase 9 — Docs sync
 
 ## Prerequisites
 
@@ -301,24 +301,44 @@ Edge-case support steps:
 
 ### Phase 7 — Workflow role separation (`ci.yml` vs `deploy.yml`)
 
-- [ ] [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml): triggers on push and PR to `main`. Runs `npm ci`, `npx astro sync`, `npm run lint`, `npm run build`. **Does not deploy.** Catches regressions before merge.
-- [ ] [`.github/workflows/deploy.yml`](../../../.github/workflows/deploy.yml): triggers only on push to `main`. Runs `npm ci`, `npx astro sync`, `npm run build`, then `cloudflare/wrangler-action@v3`. **Does not lint** — trusts PR-time CI + branch protection.
-- [ ] Both workflows are independent; either can fail without blocking the other. If a deploy fails, PRs can still pass CI and stack up safely.
-- [ ] Document in [`AGENTS.md`](../../../AGENTS.md) under "Commit & Pull Request Guidelines": deploy to Cloudflare is driven by `.github/workflows/deploy.yml` on push to `main`; do not add a Wrangler step to `ci.yml`.
+- [x] [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml): triggers on push and PR to `main`. Runs `npm ci`, `npx astro sync`, `npm run lint`, `npm run build`. **Does not deploy.** Catches regressions before merge.
+- [x] [`.github/workflows/deploy.yml`](../../../.github/workflows/deploy.yml): triggers only on push to `main`. Runs `npm ci`, `npx astro sync`, `npm run build`, then `cloudflare/wrangler-action@v3`. **Does not lint** — trusts PR-time CI + branch protection.
+- [x] Both workflows are independent; either can fail without blocking the other. If a deploy fails, PRs can still pass CI and stack up safely.
+- [x] Document in [`AGENTS.md`](../../../AGENTS.md) under "Commit & Pull Request Guidelines": deploy to Cloudflare is driven by `.github/workflows/deploy.yml` on push to `main`; do not add a Wrangler step to `ci.yml`.
+
+Verification notes:
+
+- [`ci.yml`](../../../.github/workflows/ci.yml) has only `npm ci`, `npx astro sync`, `npm run lint`, and `npm run build` under a `push`/`pull_request` trigger for `main`; no Wrangler action or deploy command is present.
+- [`deploy.yml`](../../../.github/workflows/deploy.yml) has only the `push` trigger for `main`, builds the Worker bundle, then invokes `cloudflare/wrangler-action@v3`; no lint step is present.
+- [`AGENTS.md`](../../../AGENTS.md) now records the workflow split and explicitly says not to add Wrangler deploys to `ci.yml`.
 
 ### Phase 8 — Rollback drill (do not skip)
 
-- [ ] `npx wrangler deployments list` — confirm at least 2 deployment IDs exist (the manual one from Phase 4 and the GitHub Actions one from Phase 6).
-- [ ] `npx wrangler rollback <previous-deployment-id>` — verify the workers.dev URL serves the older version.
-- [ ] Push a trivial commit to `main` to let the deploy workflow roll forward again, restoring head.
-- [ ] Document that Worker rollback and Supabase migrations are independent (Risk register row 7 of [`context/foundation/infrastructure.md`](../../foundation/infrastructure.md)): rollback does **not** revert any schema/data changes.
+- [x] `npx wrangler deployments list` — confirm at least 2 deployment IDs exist (the manual one from Phase 4 and the GitHub Actions one from Phase 6).
+- [x] `npx wrangler rollback <previous-deployment-id>` — verify the workers.dev URL serves the older version.
+- [x] Push a trivial commit to `main` to let the deploy workflow roll forward again, restoring head. — used a rerun of the latest successful `Deploy` workflow instead of pushing directly to protected `main`; it redeployed current head through the same GitHub Actions deploy path.
+- [x] Document that Worker rollback and Supabase migrations are independent (Risk register row 7 of [`context/foundation/infrastructure.md`](../../foundation/infrastructure.md)): rollback does **not** revert any schema/data changes.
+
+Verification notes:
+
+- `npx wrangler deployments list` showed multiple deployment IDs, including manual deploy `55f26b4f-b649-4a71-8091-7efcde5b85ac`, GitHub Actions deploy `a0c77cb7-4947-4441-8dfe-fe920cd6d967`, and pre-drill head `cc520725-7722-48d4-bc69-117cd5439d06`.
+- Rolled back from `cc520725-7722-48d4-bc69-117cd5439d06` to previous deployment `a0c77cb7-4947-4441-8dfe-fe920cd6d967`; `https://grounded.samuel-liotta.workers.dev/` returned HTTP 200 and served the older `10x Astro` build.
+- Reran Deploy workflow run `26223446429`; rerun job `77166378799` succeeded in 43 s and produced roll-forward deployment `d03154b0-0317-4bde-8543-4b64ce88fbf6`.
+- After roll-forward, `https://grounded.samuel-liotta.workers.dev/` returned HTTP 200.
+- Important operational boundary: `npx wrangler rollback <version-id>` only moves Worker traffic to an older Worker version. It does **not** roll back Supabase schema migrations, Auth settings, table data, KV contents, or any other bound resource state. Treat database rollback as a separate migration/data-recovery procedure.
 
 ### Phase 9 — Docs sync
 
-- [ ] Update the **Deployment** section of [`README.md`](../../../README.md): production deploys happen automatically on push to `main` via [`.github/workflows/deploy.yml`](../../../.github/workflows/deploy.yml) (`cloudflare/wrangler-action@v3`); `npx wrangler deploy` from a laptop remains the manual escape hatch.
-- [ ] Note the rollback command in the same section.
-- [ ] Update [`AGENTS.md`](../../../AGENTS.md) "Commit & Pull Request Guidelines": CI runs on push/PR to `main`; deploy is driven by `deploy.yml` on push to `main` — do not add a Wrangler step to `ci.yml`.
-- [ ] (Optional) Add a one-line addendum to [`AGENTS.md`](../../../AGENTS.md) under "Security & Configuration" pointing to the `secrets.required` declaration as the source of truth for required Worker secrets.
+- [x] Update the **Deployment** section of [`README.md`](../../../README.md): production deploys happen automatically on push to `main` via [`.github/workflows/deploy.yml`](../../../.github/workflows/deploy.yml) (`cloudflare/wrangler-action@v3`); `npx wrangler deploy` from a laptop remains the manual escape hatch.
+- [x] Note the rollback command in the same section.
+- [x] Update [`AGENTS.md`](../../../AGENTS.md) "Commit & Pull Request Guidelines": CI runs on push/PR to `main`; deploy is driven by `deploy.yml` on push to `main` — do not add a Wrangler step to `ci.yml`.
+- [x] (Optional) Add a one-line addendum to [`AGENTS.md`](../../../AGENTS.md) under "Security & Configuration" pointing to the `secrets.required` declaration as the source of truth for required Worker secrets.
+
+Verification notes:
+
+- [`README.md`](../../../README.md) now documents automatic production deploys via [`.github/workflows/deploy.yml`](../../../.github/workflows/deploy.yml), manual `npx wrangler deploy`, required Worker secrets from [`wrangler.jsonc`](../../../wrangler.jsonc), and `npx wrangler rollback <previous-deployment-id>`.
+- [`README.md`](../../../README.md) CI docs now point to `main` and clarify that `ci.yml` does not deploy.
+- [`AGENTS.md`](../../../AGENTS.md) already documented the `ci.yml`/`deploy.yml` split from Phase 7 and now also points future agents to [`wrangler.jsonc`](../../../wrangler.jsonc) `secrets.required`.
 
 ## What this plan deliberately does NOT do
 

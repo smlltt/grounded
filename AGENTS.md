@@ -36,8 +36,8 @@ Two-space indent, double quotes, semicolons, trailing commas, 120-col print widt
 
 ## Commit & Pull Request Guidelines
 
-Branch off `main` as `feature/<slug>` and merge via PR. Commit subjects: short, sentence-case, imperative (e.g. *"tech stack bootstrap"*); no Conventional Commits prefix. CI (`@.github/workflows/ci.yml`) runs `astro sync`, `lint`, and `build` on push/PR to `master` — all must pass. `SUPABASE_URL`, `SUPABASE_KEY`, and `MIAPI_API_KEY` are required GitHub secrets.
+Branch off `main` as `feature/<slug>` and merge via PR. Commit subjects: short, sentence-case, imperative (e.g. *"tech stack bootstrap"*); no Conventional Commits prefix. CI (`@.github/workflows/ci.yml`) runs `astro sync`, `lint`, and `build` on push/PR to `main` — all must pass. Production deploys to Cloudflare Workers are driven by `@.github/workflows/deploy.yml` on push to `main`; do not add a Wrangler deploy step to `ci.yml`.
 
 ## Security & Configuration
 
-Local env: `.env` (Node) or `.dev.vars` (Cloudflare, gitignored); production secrets via `npx wrangler secret put`. Node pinned in `@.nvmrc` (v22.14.0).
+Local env: `.env` (Node) or `.dev.vars` (Cloudflare, gitignored); production secrets via `npx wrangler secret put`. Required Worker secrets are declared in `@wrangler.jsonc` `secrets.required`. Node pinned in `@.nvmrc` (v22.14.0).
