@@ -288,6 +288,9 @@ Status: enforced. `gh api repos/smlltt/grounded/branches/main/protection` now re
 **Verification deploy**
 
 - [x] Push a trivial commit to `main` (e.g., bump a comment in [`README.md`](../../../README.md)); confirm the workflow run is green, a new deployment ID appears in `npx wrangler deployments list`, and the workers.dev URL serves the new version. — `CI` and `Deploy` both succeeded for commit `4b7e922d3b1cac8aa83dc1f7739f079dc493c617`; Wrangler deployment version `860f1468-8894-4811-a2c6-8cf9c1d8e0a7`; `https://grounded.samuel-liotta.workers.dev/` returns HTTP 200.
+- [x] End-to-end PR-driven deploy verified via PR #10 (`Drop starter from product display name`): branch-protected merge to `main` triggered `Deploy` workflow run 26223143916 (success in 45 s), produced Wrangler deployment `a0c77cb7-4947-4441-8dfe-fe920cd6d967`, and the live URL serves the renamed hero (`<title>10x Astro</title>`).
+
+Workflow housekeeping noted during this run: GitHub Actions warned that `actions/checkout@v4`, `actions/setup-node@v4`, and `cloudflare/wrangler-action@v3` still run on Node 20, which becomes forced-to-24 by 2026-06-02 and removed by 2026-09-16. Track updates for both [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml) and [`.github/workflows/deploy.yml`](../../../.github/workflows/deploy.yml) in a future bump PR.
 
 Edge-case support steps:
 
