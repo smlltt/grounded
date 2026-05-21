@@ -53,7 +53,7 @@ flowchart LR
 - [x] Phase 3 — Local smoke against cloud Supabase
 - [x] Phase 4 — First manual deploy from laptop
 - [ ] Phase 5 — Post-deploy smoke (NFR gates)
-- [ ] Phase 6 — Set up GitHub Actions deploy workflow
+- [x] Phase 6 — Set up GitHub Actions deploy workflow
 - [ ] Phase 7 — Workflow role separation (`ci.yml` vs `deploy.yml`)
 - [ ] Phase 8 — Rollback drill
 - [ ] Phase 9 — Docs sync
@@ -281,13 +281,13 @@ Workflow notes:
 
 **Branch protection on `main`**
 
-- [ ] GitHub → repo → Settings → Branches → add a rule for `main` requiring (a) PRs before merge, (b) `ci` workflow checks to pass. Without this, anyone with write access can push directly to `main` and skip lint.
+- [x] GitHub → repo → Settings → Branches → add a rule for `main` requiring (a) PRs before merge, (b) `ci` workflow checks to pass. Without this, anyone with write access can push directly to `main` and skip lint.
 
-Status: `gh api repos/smlltt/grounded/branches/main/protection` currently returns `Branch not protected`; configure this before treating Phase 6 as complete.
+Status: enforced. `gh api repos/smlltt/grounded/branches/main/protection` now reports `required_status_checks.checks: [{ context: "ci" }]` and PR reviews required.
 
 **Verification deploy**
 
-- [ ] Push a trivial commit to `main` (e.g., bump a comment in [`README.md`](../../../README.md)); confirm the workflow run is green, a new deployment ID appears in `npx wrangler deployments list`, and the workers.dev URL serves the new version.
+- [x] Push a trivial commit to `main` (e.g., bump a comment in [`README.md`](../../../README.md)); confirm the workflow run is green, a new deployment ID appears in `npx wrangler deployments list`, and the workers.dev URL serves the new version. — `CI` and `Deploy` both succeeded for commit `4b7e922d3b1cac8aa83dc1f7739f079dc493c617`; Wrangler deployment version `860f1468-8894-4811-a2c6-8cf9c1d8e0a7`; `https://grounded.samuel-liotta.workers.dev/` returns HTTP 200.
 
 Edge-case support steps:
 
