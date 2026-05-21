@@ -152,7 +152,11 @@ Route protection is handled in `src/middleware.ts`. Add paths to the `PROTECTED_
 
 This project deploys to [Cloudflare Workers](https://workers.cloudflare.com/).
 
-1. Build the project:
+Production deploys happen automatically on every push to `main` via `.github/workflows/deploy.yml`. The workflow installs dependencies, runs `npx astro sync`, builds the Worker bundle, then deploys with `cloudflare/wrangler-action@v3`.
+
+Manual deploys from a laptop remain available as an escape hatch:
+
+1. Build the project locally:
 
 ```bash
 npm run build
@@ -164,11 +168,24 @@ npm run build
 npx wrangler deploy
 ```
 
-Set `SUPABASE_URL` and `SUPABASE_KEY` as secrets in your Cloudflare dashboard or via `npx wrangler secret put`.
+Required Worker secrets are declared in `wrangler.jsonc` under `secrets.required`. Set them in Cloudflare via `npx wrangler secret put <NAME>`:
+
+- `SUPABASE_URL`
+- `SUPABASE_KEY`
+- `MIAPI_API_KEY`
+
+To roll back Worker code to a previous deployment, list versions and roll back by version ID:
+
+```bash
+npx wrangler deployments list
+npx wrangler rollback <previous-deployment-id>
+```
+
+Worker rollback only changes the deployed Worker version. It does not revert Supabase schema migrations, Auth settings, table data, KV contents, or other bound resource state.
 
 ## CI
 
-GitHub Actions runs lint + build on every push and PR to `master`. Configure `SUPABASE_URL` and `SUPABASE_KEY` as repository secrets in GitHub for the build step.
+GitHub Actions runs lint + build on every push and PR to `main` via `.github/workflows/ci.yml`. CI does not deploy; production deployment is owned by `.github/workflows/deploy.yml`.
 
 ## License
 
